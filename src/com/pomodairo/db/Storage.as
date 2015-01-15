@@ -24,7 +24,7 @@ package com.pomodairo.db
 	
 	public class Storage
 	{
-        /** Database default file name  */
+		/** Database default file name  */
 		public static var DATABASE_FILE:String = "pomodairo-1.1.db";
 		
 		public static var instance:Storage = new Storage();
@@ -48,7 +48,7 @@ package com.pomodairo.db
 		[Bindable]
 		public var config:Dictionary = new Dictionary();
 
-        /** Database file location path */
+		/** Database file location path */
 		private var databaseFolderLocation:String;
 			
 		private var sqlConnectionFile:File;
@@ -102,32 +102,32 @@ package com.pomodairo.db
 			if (databaseFolderLocation == null || databaseFolderLocation == "") {
 				sqlConnectionFile = File.userDirectory.resolvePath(DATABASE_FILE);
 			} else {
-                var file:File = new File(databaseFolderLocation);
-                if (file.exists == false) {
-                    trace("ERROR: Storage.initAndOpenDatabase: Invalid database location. Change it at settings");
-                    sqlConnectionFile = File.userDirectory.resolvePath(DATABASE_FILE);
-                } else {
-                    if (file.isDirectory)
-                        sqlConnectionFile = new File(databaseFolderLocation+File.separator+DATABASE_FILE);
-                    else
-                        sqlConnectionFile = file;
-                }
+				var file:File = new File(databaseFolderLocation);
+				if (file.exists == false) {
+					trace("ERROR: Storage.initAndOpenDatabase: Invalid database location. Change it at settings");
+					sqlConnectionFile = File.userDirectory.resolvePath(DATABASE_FILE);
+				} else {
+					if (file.isDirectory)
+						sqlConnectionFile = new File(databaseFolderLocation+File.separator+DATABASE_FILE);
+					else
+						sqlConnectionFile = file;
+				}
 			}
 			
 			sqlConnection = new SQLConnection();
 			
 			if(sqlConnectionFile.exists) {
-                trace("Pomodairo database found: "+sqlConnectionFile.url);
-               	sqlConnection.addEventListener(SQLEvent.OPEN, onSQLConnectionOpened);
-               	sqlConnection.open(sqlConnectionFile, SQLMode.UPDATE);
-            } else {
-                trace("Creating pomodairo database: "+sqlConnectionFile.url);
-                sqlConnection.open(sqlConnectionFile, SQLMode.CREATE);
-                createTable();
-                getAllPomodoros();
-            }
-            checkConfigurationTable();
-            getAllConfig();
+				trace("Pomodairo database found: "+sqlConnectionFile.url);
+				sqlConnection.addEventListener(SQLEvent.OPEN, onSQLConnectionOpened);
+				sqlConnection.open(sqlConnectionFile, SQLMode.UPDATE);
+			} else {
+				trace("Creating pomodairo database: "+sqlConnectionFile.url);
+				sqlConnection.open(sqlConnectionFile, SQLMode.CREATE);
+				createTable();
+				getAllPomodoros();
+			}
+			checkConfigurationTable();
+			getAllConfig();
 		}
 		
 		public function initViews():void {
@@ -407,12 +407,12 @@ package com.pomodairo.db
 		}
 		
 		public function addPomodoro(pom:Pomodoro):void
-        {
-        	var sqlInsert:String = "insert into Pomodoro " + 
-        			"(name, type, pomodoros, estimated, unplanned, interruptions, created, closed, done, parent, visible, ordinal) " + 
-        			"values" + 
-        			"(:name, :type, :pomodoros, :estimated, :unplanned, :interruptions, :created, :closed, :done, :parent, :visible, :ordinal);";
-        			
+		{
+			var sqlInsert:String = "insert into Pomodoro " +
+					"(name, type, pomodoros, estimated, unplanned, interruptions, created, closed, done, parent, visible, ordinal) " +
+					"values" +
+					"(:name, :type, :pomodoros, :estimated, :unplanned, :interruptions, :created, :closed, :done, :parent, :visible, :ordinal);";
+
 			dbStatement.text = sqlInsert;
 			dbStatement.parameters[":name"] = pom.name;
 			dbStatement.parameters[":type"] = pom.type; 
@@ -433,10 +433,10 @@ package com.pomodairo.db
 			dbStatement.removeEventListener(SQLEvent.RESULT, onDBStatementSelectResult);
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
-        }
-        
-        public function updatePomodoro(updated:Pomodoro, old:Pomodoro):void
-        {
+		}
+
+		public function updatePomodoro(updated:Pomodoro, old:Pomodoro):void
+		{
 			dbStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
@@ -448,7 +448,7 @@ package com.pomodairo.db
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			
 			dbStatement.execute();        	
-        }
+		}
 	
 	
 		public function remove(pom:Pomodoro):void
