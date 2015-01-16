@@ -440,8 +440,10 @@ package com.pomodairo.db
 			dbStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlUpdate:String = "update Pomodoro set name= '" + updated.name + "', estimated=" + updated.estimated + " where id='" + old.id + "';";
-			dbStatement.text = sqlUpdate;
+			dbStatement.text = "UPDATE Pomodoro SET name=:name, estimated=:estimated WHERE id=:id;";
+			dbStatement.parameters[":name"] = updated.name;
+			dbStatement.parameters[":estimated"] = updated.estimated;
+			dbStatement.parameters[":id"] = old.id;
 			
 			// Don't know why we are doing this?
 			dbStatement.removeEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
