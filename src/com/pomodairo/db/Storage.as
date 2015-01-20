@@ -13,15 +13,15 @@ package com.pomodairo.db
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
 	import flash.errors.SQLError;
-	import flash.events.SQLErrorEvent;
+import flash.events.SQLErrorEvent;
 	import flash.events.SQLEvent;
 	import flash.filesystem.File;
 	import flash.utils.Dictionary;
 	
 	import mx.collections.ArrayCollection;
-	
+
 	//import org.osflash.thunderbolt.Logger;
-	
+
 	public class Storage
 	{
 		/** Database default file name  */
@@ -117,11 +117,11 @@ package com.pomodairo.db
 			sqlConnection = new SQLConnection();
 			
 			if(sqlConnectionFile.exists) {
-				trace("Pomodairo database found: "+sqlConnectionFile.url);
+				trace("Pomodairo database found: " + sqlConnectionFile.url);
 				sqlConnection.addEventListener(SQLEvent.OPEN, onSQLConnectionOpened);
 				sqlConnection.open(sqlConnectionFile, SQLMode.UPDATE);
 			} else {
-				trace("Creating pomodairo database: "+sqlConnectionFile.url);
+				trace("Creating pomodairo database: " + sqlConnectionFile.url);
 				sqlConnection.open(sqlConnectionFile, SQLMode.CREATE);
 				createTable();
 				getAllPomodoros();
@@ -140,7 +140,7 @@ package com.pomodairo.db
 		}
 		
 		private function onSQLConnectionOpened(event:SQLEvent):void {
-		if (event.type == "open") {
+			if (event.type == "open") {
 				migrateFrom15to16();
 				getAllPomodoros();
 			}
@@ -458,8 +458,8 @@ package com.pomodairo.db
 			dbStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlDelete:String = "delete from Pomodoro where id='"+pom.id+"';";
-			dbStatement.text = sqlDelete;
+			dbStatement.text = "delete from Pomodoro where id=:id;";
+			dbStatement.parameters[":id"] = pom.id;
 			dbStatement.removeEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
@@ -470,8 +470,7 @@ package com.pomodairo.db
 			dbStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlMarkDone:String = "update Pomodoro set done = :done, closed = strftime( '%J', :closed ) where id=:id;";
-			dbStatement.text = sqlMarkDone;
+			dbStatement.text = "update Pomodoro set done=:done, closed=strftime( '%J', :closed ) where id=:id;";
 			dbStatement.parameters[":id"] = pom.id;
 			dbStatement.parameters[":done"] = pom.done;
 			dbStatement.parameters[":closed"] = pom.closed;
@@ -485,8 +484,9 @@ package com.pomodairo.db
 			dbStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlMarkDone:String = "update Pomodoro set visible = "+pom.visible+" where id='"+pom.id+"';";
-			dbStatement.text = sqlMarkDone;
+			dbStatement.text = "update Pomodoro set visible=:visible where id=:id;";
+			dbStatement.parameters[":id"] = pom.id;
+			dbStatement.parameters[":visible"] = pom.visible;
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}	
@@ -496,8 +496,9 @@ package com.pomodairo.db
 			dbStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlMarkDone:String = "update Pomodoro set ordinal = "+pom.ordinal+" where id='"+pom.id+"';";
-			dbStatement.text = sqlMarkDone;
+			dbStatement.text = "update Pomodoro set ordinal = :ordinal where id=:id;";
+			dbStatement.parameters[":id"] = pom.id;
+			dbStatement.parameters[":ordinal"] = pom.ordinal;
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}		
@@ -509,8 +510,7 @@ package com.pomodairo.db
 			dbStatement.sqlConnection = sqlConnection;
 			trace("Increase DB Pomodoro count: "+pom.pomodoros);
 			pom.pomodoros++;
-			var sqlMarkDone:String = "update Pomodoro set pomodoros = "+pom.pomodoros+" where id='"+pom.id+"';";
-			dbStatement.text = sqlMarkDone;
+			dbStatement.text = "update Pomodoro set pomodoros = "+pom.pomodoros+" where id='"+pom.id+"';";
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}		
@@ -521,8 +521,7 @@ package com.pomodairo.db
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			pom.interruptions++;
-			var sqlMarkDone:String = "update Pomodoro set interruptions = "+pom.interruptions+" where id='"+pom.id+"';";
-			dbStatement.text = sqlMarkDone;
+			dbStatement.text = "update Pomodoro set interruptions = "+pom.interruptions+" where id='"+pom.id+"';";
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}		
@@ -533,8 +532,7 @@ package com.pomodairo.db
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			pom.unplanned++;
-			var sqlMarkDone:String = "update Pomodoro set unplanned = "+pom.unplanned+" where id='"+pom.id+"';";
-			dbStatement.text = sqlMarkDone;
+			dbStatement.text = "update Pomodoro set unplanned = "+pom.unplanned+" where id='"+pom.id+"';";
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}
@@ -551,12 +549,7 @@ package com.pomodairo.db
 		private function checkConfigurationTable():void {
 		 	var q:SQLStatement = new SQLStatement();
 		 	q.sqlConnection = sqlConnection;
-		 	
-		 	var sql:String = "CREATE TABLE IF NOT EXISTS config( " +
-		 				"name TEXT PRIMARY KEY, " +
-		 				"value TEXT )";
-		 					
-		 	q.text = sql;
+		 	q.text = "CREATE TABLE IF NOT EXISTS config(name TEXT PRIMARY KEY, value TEXT )";
 		 	q.addEventListener( SQLEvent.RESULT, createResult );
 		 	q.addEventListener( SQLErrorEvent.ERROR, createError );
 		 	q.execute();
@@ -567,8 +560,7 @@ package com.pomodairo.db
 			dbCfgStatement = new SQLStatement();
 			dbCfgStatement.itemClass = ConfigProperty;
 			dbCfgStatement.sqlConnection = sqlConnection;
-			var sqlQuery:String = "select * from Config";
-			dbCfgStatement.text = sqlQuery;
+			dbCfgStatement.text = "SELECT * FROM config";
 			dbCfgStatement.addEventListener(SQLEvent.RESULT, getSelectConfigResult);
 			dbCfgStatement.execute();
 		}

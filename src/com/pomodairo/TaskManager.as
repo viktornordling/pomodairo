@@ -1,8 +1,9 @@
 package com.pomodairo
 {
 	import com.pomodairo.db.Storage;
-	
-	import mx.collections.ArrayCollection;
+import com.pomodairo.events.PomodoroEvent;
+
+import mx.collections.ArrayCollection;
 	
 	public class TaskManager
 	{
@@ -28,9 +29,13 @@ package com.pomodairo
 				activeTask = null;
 				return false;
 			}
-			var currentIndex:int = getItemIndex(activeTask);
+
+			var currentIndex:int = -1;
+			if (activeTask)
+				getItemIndex(activeTask);
+
 			// End of list reached. Select first element.
-			if(currentIndex >= (openTasks.length -1)) {
+			if(currentIndex >= (openTasks.length -1) || currentIndex == -1) {
 				activeTask = Pomodoro(openTasks.getItemAt(0));
 			}
 			// Select next element in list.
@@ -50,6 +55,8 @@ package com.pomodairo
 			}
 			else {
 				trace("Task '"+task.name+"' is not in list of open tasks.");
+				var event:PomodoroEvent = new PomodoroEvent(PomodoroEvent.LIST_EMPTY);
+				PomodoroEventDispatcher.getInstance().dispatchEvent(event);
 			}
 		}
 		

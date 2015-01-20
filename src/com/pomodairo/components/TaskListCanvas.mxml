@@ -9,6 +9,7 @@
 			import com.pomodairo.events.PomodoroEvent;
 			import com.pomodairo.PomodoroEventDispatcher;
 			import com.pomodairo.Pomodoro;
+			import com.pomodairo.TaskManager;
 			import com.pomodairo.TableUtils;
 			import com.pomodairo.db.Storage;
 
@@ -22,6 +23,8 @@
 
 			[Bindable]
 			public var app:WindowedApplication;
+
+			private var taskManager:TaskManager = TaskManager.instance;
 
 			override protected function keyUpHandler(event:KeyboardEvent):void
 			{
@@ -118,6 +121,9 @@
 				}
 
 				db.remove(pom);
+
+				if (taskManager.activeTask.id == pom.id)
+					findNextTask();
 			}
 
 			private function onAddPomodoroClicked(event:Event=null):void
@@ -147,9 +153,13 @@
 			private function onStartPomodoroClicked(event:Event=null):void
 			{
 				var pom:Pomodoro = pomodorosDataGrid.selectedItem as Pomodoro;
-				var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.SELECTED);
-				evt.pomodoro = pom;
-				PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
+				if (pom) {
+					var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.SELECTED);
+					evt.pomodoro = pom;
+					PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
+				} else {
+					trace("TaskListCanvas onStartPomodoroClicked pomodoro not selected");
+				}
 			}
 
 	        private function onDonePomodoroClicked(event:Event=null):void
@@ -170,6 +180,17 @@
 				var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.DONE);
 				evt.pomodoro = pom;
 				PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
+
+				findNextTask();
+			}
+
+			private function findNextTask():void
+			{
+				var result:Boolean = taskManager.nextTask();
+				if (result == false) {
+					var emptyListEvent:PomodoroEvent = new PomodoroEvent(PomodoroEvent.LIST_EMPTY);
+					PomodoroEventDispatcher.getInstance().dispatchEvent(emptyListEvent);
+				}
 			}
 
 	        private function onClosePomodoroClicked(event:Event=null):void
@@ -263,7 +284,7 @@
 	<mx:Number id="lastRollOverIndex" />
 
 	<mx:DataGrid id="pomodorosDataGrid"
-		dataProvider="{db.dataset}" 
+		dataProvider="{db.dataset}"
 		top="0" right="0" bottom="44" left="0"
 		editable="false"
 		rightClick="displayMenu(event);"
