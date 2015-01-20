@@ -7,17 +7,21 @@
 			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
 			import com.pomodairo.events.PomodoroEvent;
-			import com.pomodairo.components.CustomRenderer;
 			import com.pomodairo.PomodoroEventDispatcher;
 			import com.pomodairo.Pomodoro;
 			import com.pomodairo.TableUtils;
 			import com.pomodairo.db.Storage;
+
+			import spark.components.WindowedApplication;
 
 			[Bindable]
 			private var db:Storage = Storage.instance;
 
 			[Bindable]
 			private var taskMenu:NativeMenu = new NativeMenu();
+
+			[Bindable]
+			public var app:WindowedApplication;
 
 			override protected function keyUpHandler(event:KeyboardEvent):void
 			{
@@ -132,41 +136,41 @@
 					trace("WARNING: TaskListCanvas.onEditPomodoroClicked: Pomodoro is not selected");
 					return;
 				}
-	        	var input:PomoItemInput = new PomoItemInput();
-            	input.type = Pomodoro.TYPE_EDIT;
-            	input.selectAfterCreate = true;
-            	input.reference = pom;
-            	PopUpManager.addPopUp(input, this, true);
-                PopUpManager.centerPopUp(input);
-	        }
+				var input:PomoItemInput = new PomoItemInput();
+				input.type = Pomodoro.TYPE_EDIT;
+				input.selectAfterCreate = true;
+				input.reference = pom;
+				PopUpManager.addPopUp(input, this, true);
+				PopUpManager.centerPopUp(input);
+			}
 
-	        private function onStartPomodoroClicked(event:Event=null):void
-	        {
-	        	var pom:Pomodoro = pomodorosDataGrid.selectedItem as Pomodoro;
-	        	var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.SELECTED);
-	        	evt.pomodoro = pom;
-	        	PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
-	        }
+			private function onStartPomodoroClicked(event:Event=null):void
+			{
+				var pom:Pomodoro = pomodorosDataGrid.selectedItem as Pomodoro;
+				var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.SELECTED);
+				evt.pomodoro = pom;
+				PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
+			}
 
 	        private function onDonePomodoroClicked(event:Event=null):void
 	        {
 	        	if (!pomodorosDataGrid.selectedItem) return;
 
-	        	var pom:Pomodoro = pomodorosDataGrid.selectedItem as Pomodoro;
-	        	if(pom.done) {
-	        		pom.closed = null;
-	        	}
-	        	else {
-	        		pom.closed = new Date();
-	        	}
-	        	pom.done = !pom.done;
-	        	// Following is done by event listener in db object.
-	        	// db.markDone(pom);
-	        	// Dispatch event.
-	        	var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.DONE);
-	        	evt.pomodoro = pom;
-	        	PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
-	        }
+				var pom:Pomodoro = pomodorosDataGrid.selectedItem as Pomodoro;
+				if (pom.done) {
+					pom.closed = null;
+				}
+				else {
+					pom.closed = new Date();
+				}
+				pom.done = !pom.done;
+				// Following is done by event listener in db object.
+				// db.markDone(pom);
+				// Dispatch event.
+				var evt:PomodoroEvent = new PomodoroEvent(PomodoroEvent.DONE);
+				evt.pomodoro = pom;
+				PomodoroEventDispatcher.getInstance().dispatchEvent(evt);
+			}
 
 	        private function onClosePomodoroClicked(event:Event=null):void
 	        {
@@ -199,6 +203,60 @@
 				Alert.show("Name: " + pom.name+"\nEstimated: "+pom.estimated+"\nWorked: "+pom.pomodoros+"\nInterruptions: "+pom.interruptions);
 			}
 
+			private var clickX:Number;
+			private var clickY:Number;
+			private var isResizing:Boolean;
+			private var windowOriginHeight:Number;
+
+			private var cursorId:int;
+
+			private function resizeLine_mouseDownHandler(event:MouseEvent):void {
+				clickX = event.stageX;
+				clickY = event.stageY;
+				stage.addEventListener(MouseEvent.MOUSE_MOVE, stage_mouseMoveHandler)
+				stage.addEventListener(MouseEvent.MOUSE_UP, stage_mouseUpHandler);
+			}
+
+			private function stage_mouseUpHandler(event:MouseEvent):void {
+				stage.removeEventListener(MouseEvent.MOUSE_UP, stage_mouseUpHandler);
+				stage.removeEventListener(MouseEvent.MOUSE_MOVE, stage_mouseMoveHandler);
+				clickX = 0.0;
+				clickY = 0.0;
+				windowOriginHeight = 0.0;
+				isResizing = false;
+				setDefaultCursor();
+			}
+
+			private function stage_mouseMoveHandler(event:MouseEvent):void {
+				var dy:Number = event.stageY - clickY;
+				if (dy * dy > 25 && isResizing == false) {
+					isResizing = true;
+					windowOriginHeight = app.nativeWindow.height;
+				}
+
+				if (isResizing) {
+					app.nativeWindow.height = windowOriginHeight + dy;
+				}
+			}
+
+			[Embed(source="/style/kingnarestyle.swf", symbol="DividedBox_verticalCursor")]
+			public static const ResizeCursorClass:Class;
+
+			private function resizeLine_rollOverHandler(event:MouseEvent):void {
+				cursorId = cursorManager.setCursor(ResizeCursorClass);
+			}
+
+			private function resizeLine_rollOutHandler(event:MouseEvent):void {
+				if (isResizing == false) {
+					setDefaultCursor();
+				}
+			}
+
+			private function setDefaultCursor():void
+			{
+				cursorManager.removeAllCursors();
+				cursorId = -1;
+			}
 		]]>
 	</mx:Script>
 	
@@ -225,6 +283,12 @@
 			<!-- Useful for debugging ordinal stuff --> <!-- <mx:DataGridColumn width="28" headerText="S" dataField="ordinal" dataTipField="ordinalDescription" showDataTips="true" itemRenderer="com.pomodairo.components.CustomRenderer" /> -->
 		</mx:columns>
 	</mx:DataGrid>
+
+	<mx:Canvas id="resizeLine" bottom="0" left="0" right="0" height="44"
+		backgroundColor="0xFFFFFF" backgroundAlpha="0.2"
+		mouseDown="resizeLine_mouseDownHandler(event)"
+		rollOver="resizeLine_rollOverHandler(event)"
+		rollOut="resizeLine_rollOutHandler(event)"/>
 	
 	<mx:Button id="addPomoButton" label="Add New" click="onAddPomodoroClicked()" width="91" height="24" right="10" bottom="10"/>
 
