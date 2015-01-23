@@ -122,7 +122,7 @@
 
 				db.remove(pom);
 
-				if (taskManager.activeTask.id == pom.id)
+				if (taskManager.activeTask && taskManager.activeTask.id == pom.id)
 					findNextTask();
 			}
 
