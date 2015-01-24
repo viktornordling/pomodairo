@@ -32,7 +32,7 @@ import mx.collections.ArrayCollection;
 
 			var currentIndex:int = -1;
 			if (activeTask)
-				getItemIndex(activeTask);
+				currentIndex = getItemIndex(activeTask);
 
 			// End of list reached. Select first element.
 			if(currentIndex >= (openTasks.length -1) || currentIndex == -1) {
