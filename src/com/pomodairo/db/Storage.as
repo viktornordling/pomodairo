@@ -5,7 +5,6 @@ package com.pomodairo.db
 	import com.pomodairo.PomodoroEventDispatcher;
 	import com.pomodairo.RegexUtils;
 	import com.pomodairo.components.config.AdvancedConfigPanel;
-	import com.pomodairo.events.ConfigurationUpdatedEvent;
 	import com.pomodairo.events.PomodoroEvent;
 	
 	import flash.data.SQLConnection;
@@ -13,14 +12,12 @@ package com.pomodairo.db
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
 	import flash.errors.SQLError;
-import flash.events.SQLErrorEvent;
+	import flash.events.SQLErrorEvent;
 	import flash.events.SQLEvent;
 	import flash.filesystem.File;
 	import flash.utils.Dictionary;
 	
 	import mx.collections.ArrayCollection;
-
-	//import org.osflash.thunderbolt.Logger;
 
 	public class Storage
 	{
@@ -53,7 +50,6 @@ import flash.events.SQLErrorEvent;
 			
 		private var sqlConnectionFile:File;
 		private var sqlConnection:SQLConnection;
-		private var dbStatement:SQLStatement;
 		private var dbCfgStatement:SQLStatement;
 		
 		public function Storage() {
@@ -174,10 +170,10 @@ import flash.events.SQLErrorEvent;
 
 		public function getAllPomodoros():void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlQuery:String = "select * from Pomodoro where (type='"+Pomodoro.TYPE_POMODORO+"' or type='"+Pomodoro.TYPE_UNPLANNED+"') and visible=true " + 
+			var sqlQuery:String = "select * from Pomodoro where (type='"+Pomodoro.TYPE_POMODORO+"' or type='"+Pomodoro.TYPE_UNPLANNED+"') and visible=true " +
 					"order by ordinal desc, done desc, closed, strftime('%Y/%m/%d',created)!=strftime('%Y/%m/%d','now') desc, pomodoros desc, estimated desc";
 			dbStatement.text = sqlQuery;
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementSelectResult);
@@ -186,28 +182,27 @@ import flash.events.SQLErrorEvent;
 		
 		public function getOpenPomodoros():ArrayCollection
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlQuery:String = "select * from Pomodoro where (type='"+Pomodoro.TYPE_POMODORO+"' or type='"+Pomodoro.TYPE_UNPLANNED+"') and visible=true " + 
+			var sqlQuery:String = "select * from Pomodoro where (type='"+Pomodoro.TYPE_POMODORO+"' or type='"+Pomodoro.TYPE_UNPLANNED+"') and visible=true " +
 					"and done=false order by ordinal desc";
 			dbStatement.text = sqlQuery;
 			dbStatement.execute();
 			var result:SQLResult = dbStatement.getResult();
 			return new ArrayCollection(result.data);
 		}
-		
+
 		public function getAllItems():void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
-			var sqlQuery:String = "select * from Pomodoro";
-			dbStatement.text = sqlQuery;
+			dbStatement.text = "SELECT * from Pomodoro";
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementSelectResult);
 			dbStatement.execute();
 		}
-		
+
 		private function getStartDate(date:Date, range:Number):Date {
 			if(range < 0) {
 				return new Date(date.fullYear, date.month, date.date + range);
@@ -231,7 +226,7 @@ import flash.events.SQLErrorEvent;
 			if(filter != "") {
 				filterSql = " and name like '%"+filter+"%'";
 			}
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			//dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			var sqlQuery:String = "select name, substr(type,0,1) AS type,strftime('%Y/%m/%d %H:%S',closed) AS closed, estimated, pomodoros, (pomodoros - estimated) AS delta, (unplanned + interruptions) AS interruptions from Pomodoro where closed > strftime( '%J', :startDate ) and closed <= strftime( '%J', :endDate ) and (type='"+Pomodoro.TYPE_POMODORO+"' or type='"+Pomodoro.TYPE_UNPLANNED+"') and done=1"+filterSql;
@@ -248,7 +243,7 @@ import flash.events.SQLErrorEvent;
 			if(filter != "") {
 				filterSql = " and name like '%"+filter+"%'";
 			}
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			//dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			var sqlQuery:String = "select name, strftime('%Y/%m/%d %H:%S',created) AS created, type, parent from Pomodoro where created > strftime( '%J', :startDate ) and created <= strftime( '%J', :endDate ) and (type='"+Pomodoro.TYPE_INTERRUPTION+"' or type='"+Pomodoro.TYPE_UNPLANNED+"')"+filterSql;
@@ -262,7 +257,7 @@ import flash.events.SQLErrorEvent;
 		public function getPomodorosPerDay():void
 		{
 			// Created pomodoros per day, not the pomodoros done!
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			//dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			var sqlQuery:String = "SELECT strftime('%Y/%m/%d',created) AS created, sum(estimated) AS estimated, sum(pomodoros) AS pomodoros, (sum(interruptions) + sum(unplanned)) AS interruptions, (sum(pomodoros)-sum(estimated)) AS delta FROM pomodoro GROUP BY created";
@@ -274,7 +269,7 @@ import flash.events.SQLErrorEvent;
 		public function getRealityFactors():void
 		{
 			// Created pomodoros per week, not the pomodoros done!
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			//dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			var sqlQuery:String = "SELECT strftime('%W',created)+1 AS week, round(cast(sum(pomodoros) as real)/sum(estimated),2) AS factor, sum(estimated) AS estimated, sum(pomodoros) AS pomodoros, (sum(interruptions) + sum(unplanned)) AS interruptions, (sum(pomodoros)-sum(estimated)) AS delta FROM pomodoro GROUP BY week";
@@ -286,7 +281,7 @@ import flash.events.SQLErrorEvent;
 		public function getPomodoroHashTags():void
 		{
 			var regexUtils:RegexUtils = new RegexUtils();
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			var sqlQuery:String = "SELECT * FROM pomodoro WHERE name like '%#%' and (type='"+Pomodoro.TYPE_POMODORO+"' or type='"+Pomodoro.TYPE_UNPLANNED+"')";
@@ -310,7 +305,7 @@ import flash.events.SQLErrorEvent;
 		public function getInterruptionHashTags():void
 		{
 			var regexUtils:RegexUtils = new RegexUtils();
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			var sqlQuery:String = "SELECT * FROM pomodoro WHERE name like '%#%' and (type='"+Pomodoro.TYPE_INTERRUPTION+"' or type='"+Pomodoro.TYPE_UNPLANNED+"')";
@@ -335,7 +330,7 @@ import flash.events.SQLErrorEvent;
 		private function removeDuplicates(arr:Array):Array
 		{
 			var currentValue:String = "";
-			var tempArray:Array = new Array();
+			var tempArray:Array = [];
 			arr.sort(Array.CASEINSENSITIVE);
 			arr.forEach(
 				function(item:*, index:uint, array:Array):void {
@@ -350,7 +345,10 @@ import flash.events.SQLErrorEvent;
 		
 		private function onDBStatementStatisticsResult1(event:SQLEvent):void
 		{
-			var result:SQLResult = dbStatement.getResult();
+			var statement:SQLStatement = event.currentTarget as SQLStatement;
+			statement.removeEventListener(SQLEvent.RESULT, onDBStatementStatisticsResult1);
+
+			var result:SQLResult = statement.getResult();
 		    if (result != null)
 		    {
 		    	datasetStatistics1 = result.data;
@@ -358,7 +356,10 @@ import flash.events.SQLErrorEvent;
 		}
 		private function onDBStatementStatisticsResult2(event:SQLEvent):void
 		{
-			var result:SQLResult = dbStatement.getResult();
+			var statement:SQLStatement = event.currentTarget as SQLStatement;
+			statement.removeEventListener(SQLEvent.RESULT, onDBStatementStatisticsResult2);
+
+			var result:SQLResult = statement.getResult();
 		    if (result != null)
 		    {
 		    	datasetStatistics2 = result.data;
@@ -366,7 +367,9 @@ import flash.events.SQLErrorEvent;
 		}
 		private function onDBStatementStatisticsResult3(event:SQLEvent):void
 		{
-			var result:SQLResult = dbStatement.getResult();
+			var statement:SQLStatement = event.currentTarget as SQLStatement;
+			statement.removeEventListener(SQLEvent.RESULT, onDBStatementStatisticsResult3);
+			var result:SQLResult = statement.getResult();
 		    if (result != null)
 		    {
 		    	datasetStatistics3 = result.data;
@@ -374,7 +377,10 @@ import flash.events.SQLErrorEvent;
 		}
 		private function onDBStatementStatisticsResult4(event:SQLEvent):void
 		{
-			var result:SQLResult = dbStatement.getResult();
+			var statement:SQLStatement = event.currentTarget as SQLStatement;
+			statement.removeEventListener(SQLEvent.RESULT, onDBStatementStatisticsResult4);
+
+			var result:SQLResult = statement.getResult();
 		    if (result != null)
 		    {
 		    	datasetStatistics4 = result.data;
@@ -383,7 +389,10 @@ import flash.events.SQLErrorEvent;
 		
 		private function onDBStatementSelectResult(event:SQLEvent):void
 		{
-			var result:SQLResult = dbStatement.getResult();
+			var statement:SQLStatement = event.currentTarget as SQLStatement;
+			statement.removeEventListener(SQLEvent.RESULT, onDBStatementSelectResult);
+
+			var result:SQLResult = statement.getResult();
 		    if (result != null)
 		    {
 		    	dataset = result.data;
@@ -392,6 +401,9 @@ import flash.events.SQLErrorEvent;
 		
 		private function onDBStatementInsertResult(event:SQLEvent):void
 		{
+			var statement:SQLStatement = event.currentTarget as SQLStatement;
+			statement.removeEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
+
 		    if (sqlConnection.totalChanges >= 1)
 		    {
 		    	getAllPomodoros();
@@ -408,6 +420,8 @@ import flash.events.SQLErrorEvent;
 		
 		public function addPomodoro(pom:Pomodoro):void
 		{
+			var dbStatement:SQLStatement = new SQLStatement();
+			dbStatement.sqlConnection = sqlConnection;
 			var sqlInsert:String = "insert into Pomodoro " +
 					"(name, type, pomodoros, estimated, unplanned, interruptions, created, closed, done, parent, visible, ordinal) " +
 					"values" +
@@ -428,60 +442,52 @@ import flash.events.SQLErrorEvent;
 			dbStatement.parameters[":done"] = pom.done;
 			dbStatement.parameters[":parent"] = pom.parent;
 			dbStatement.parameters[":visible"] = pom.visible;
-			dbStatement.parameters[":ordinal"] = pom.ordinal;          
-			
-			dbStatement.removeEventListener(SQLEvent.RESULT, onDBStatementSelectResult);
+			dbStatement.parameters[":ordinal"] = pom.ordinal;
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}
 
 		public function updatePomodoro(updated:Pomodoro, old:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			dbStatement.text = "UPDATE Pomodoro SET name=:name, estimated=:estimated WHERE id=:id;";
 			dbStatement.parameters[":name"] = updated.name;
 			dbStatement.parameters[":estimated"] = updated.estimated;
 			dbStatement.parameters[":id"] = old.id;
-			
-			// Don't know why we are doing this?
-			dbStatement.removeEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
-			
 			dbStatement.execute();        	
 		}
 	
 	
 		public function remove(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			dbStatement.text = "delete from Pomodoro where id=:id;";
 			dbStatement.parameters[":id"] = pom.id;
-			dbStatement.removeEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}
 		
 		public function markDone(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			dbStatement.text = "update Pomodoro set done=:done, closed=strftime( '%J', :closed ) where id=:id;";
 			dbStatement.parameters[":id"] = pom.id;
 			dbStatement.parameters[":done"] = pom.done;
 			dbStatement.parameters[":closed"] = pom.closed;
-			//Logger.debug("Updating pomodoro to 'done'...", pom.closed);
 			dbStatement.addEventListener(SQLEvent.RESULT, onDBStatementInsertResult);
 			dbStatement.execute();
 		}		
 		
 		public function updateVisibility(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			dbStatement.text = "update Pomodoro set visible=:visible where id=:id;";
@@ -493,7 +499,7 @@ import flash.events.SQLErrorEvent;
 		
 		public function updateOrdinal(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			dbStatement.text = "update Pomodoro set ordinal = :ordinal where id=:id;";
@@ -505,7 +511,7 @@ import flash.events.SQLErrorEvent;
 		
 		public function increasePomodoroCount(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			trace("Increase DB Pomodoro count: "+pom.pomodoros);
@@ -517,7 +523,7 @@ import flash.events.SQLErrorEvent;
 		
 		public function increaseInterruptionCount(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			pom.interruptions++;
@@ -528,7 +534,7 @@ import flash.events.SQLErrorEvent;
 		
 		public function increaseUnplannedCount(pom:Pomodoro):void
 		{
-			dbStatement = new SQLStatement();
+			var dbStatement:SQLStatement = new SQLStatement();
 			dbStatement.itemClass = Pomodoro;
 			dbStatement.sqlConnection = sqlConnection;
 			pom.unplanned++;
