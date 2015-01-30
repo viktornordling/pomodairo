@@ -4,6 +4,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.core.WindowedApplication;
 			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
 			import com.pomodairo.events.PomodoroEvent;
@@ -12,8 +13,6 @@
 			import com.pomodairo.TaskManager;
 			import com.pomodairo.TableUtils;
 			import com.pomodairo.db.Storage;
-
-			import spark.components.WindowedApplication;
 
 			[Bindable]
 			private var db:Storage = Storage.instance;

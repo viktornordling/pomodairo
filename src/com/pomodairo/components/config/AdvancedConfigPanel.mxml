@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" x="10" y="5" width="298" height="154" backgroundColor="#313131"
-	creationComplete="init()">
+<panels:BaseConfigPanel
+	xmlns:panels="com.pomodairo.components.config.*"
+	xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="init()">
 
-
-<mx:Script>
+	<mx:Script>
         <![CDATA[
         	import mx.controls.Alert;
         	import com.pomodairo.events.ConfigurationUpdatedEvent;
         	import com.pomodairo.PomodoroEventDispatcher;
         	import com.pomodairo.db.Storage;
-        	
-        	public static var DATABASE_LOCATION:String = "db.location";
+
+			import mx.managers.PopUpManager;
+
+			public static var DATABASE_LOCATION:String = "db.location";
         	
         	public var dataFileLocation:String = "";
         	
@@ -26,7 +28,7 @@
         		applyGuiValues();	
         	}
         	
-        	public function populate():void
+        	override public function populate():void
         	{
         		dataFileLocation = getDatabaseLocation();
         		
@@ -39,11 +41,7 @@
 
         		dataFileLocationInput.text = dataFileLocation;
             }
-        	
-            private function exit():void
-            {
-            	this.parent.removeChild(this);
-            }
+
             
             public function save():void
             {
@@ -54,7 +52,7 @@
             	notifyConfiguration();
             }
             
-            public function notifyConfiguration():void
+            override public function notifyConfiguration():void
             {
             	// Notify the world 
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, DATABASE_LOCATION, dataFileLocation));
@@ -108,4 +106,4 @@
 	<mx:Button x="221" y="90" label="Save" click="save()" width="63"/>
 	<mx:Button x="221" y="121" label="Cancel" click="exit()"/>
 	
-</mx:Canvas>
+</panels:BaseConfigPanel>

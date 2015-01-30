@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" x="10" y="5" width="298" height="154" backgroundColor="#313131"
+<config:BaseConfigPanel
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:config="com.pomodairo.components.config.*"
 	creationComplete="init()">
 
 
@@ -27,7 +29,7 @@
         		applyGuiValues();	
         	}
         	
-        	public function populate():void
+        	override public function populate():void
         	{
         		var props:Dictionary = Storage.instance.config;
         		
@@ -54,11 +56,6 @@
         		postCheckbox.selected = doPost;
         		groupUsernameField.text = groupUsername;
             }
-        	
-            private function exit():void
-            {
-            	this.parent.removeChild(this);
-            }
             
             public function save():void
             {
@@ -74,7 +71,7 @@
             	notifyConfiguration();
             }
             
-            public function notifyConfiguration():void
+            override public function notifyConfiguration():void
             {
             	// Notify the world 
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, ENABLED, ""+twitterEnabled));
@@ -103,4 +100,4 @@
 	<mx:Button x="221" y="90" label="Save" click="save()" width="63"/>
 	<mx:Button x="221" y="121" label="Cancel" click="exit()"/>
 	
-</mx:Canvas>
+</config:BaseConfigPanel>

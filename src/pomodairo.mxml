@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml"
-	layout="absolute" height="165" width="320" showFlexChrome="false"
+<mx:WindowedApplication
+    xmlns:s="library://ns.adobe.com/flex/spark"
+    xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:ns1="com.pomodairo.components.*"
+	showFlexChrome="false" layout="absolute"
 	verticalScrollPolicy="off" horizontalScrollPolicy="off"
-	initialize="beforeInit()"
-	creationComplete="init()" xmlns:views="com.views.*" xmlns:ns1="com.pomodairo.components.*"
+	height="150" width="320"
 	backgroundColor="#292929"
-	closing="beforeClose()"
+	showStatusBar="false"
 	title="{timerCanvas.appTitle}"
-	windowResize="{resizeHandler(event)}"
-	minWidth="320"
-	close="shutdown()" xmlns:s="library://ns.adobe.com/flex/spark">
+	initialize="beforeInit()"
+	creationComplete="init()"
+	closing="beforeClose()"
+	windowResize="resizeHandler(event)"
+	close="shutdown()">
 
-	<mx:Style source="style/styles.css"/>
+    <mx:Style source="/style/style.css" />
 	
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
-			
+
 			import com.pomodairo.Pomodoro;
 			import com.pomodairo.PomodoroEventDispatcher;
 			import com.pomodairo.TaskManager;
@@ -25,7 +29,9 @@
 			import com.pomodairo.components.StatisticsWindow;
 			import com.pomodairo.components.config.AboutPanel;
 			import com.pomodairo.components.config.AdvancedConfigPanel;
+			import com.pomodairo.components.config.BaseConfigPanel;
 			import com.pomodairo.components.config.ConfigPanel;
+			import com.pomodairo.components.config.ConfirmPanel;
 			import com.pomodairo.components.config.SoundConfigPanel;
 			import com.pomodairo.components.config.TimingConfigPanel;
 			import com.pomodairo.components.config.TwitterConfigPanel;
@@ -34,6 +40,8 @@
 			import com.pomodairo.events.GuiChangeEvent;
 			import com.pomodairo.events.PomodoroEvent;
 			import com.pomodairo.twitter.TwitterManager;
+
+			import mx.core.IFlexDisplayObject;
 
 			import mx.events.MenuEvent;
 			import mx.managers.PopUpManager;
@@ -46,14 +54,14 @@
             public static const FULL_HEIGHT:Number = SHORT_HEIGHT + 300;
 
 			private var appUpdater:ApplicationUpdaterUI = new ApplicationUpdaterUI();
-			
+
 			private var taskManager:TaskManager = TaskManager.instance;
-			
+
 			private var twitterManager:TwitterManager = new TwitterManager();
 
 			private function beforeInit():void {
 				PomodoroEventDispatcher.getInstance().addEventListener(ConfigurationUpdatedEvent.UPDATED, onConfigurationChange);
-				
+
 				var remember:Boolean = Storage.instance.config[ConfigPanel.REMEMBER_POSITION] == "true";
 				if (remember)
 				{
@@ -78,41 +86,28 @@
 				{
 					this.width = setWidth;
 				}
-				
-				// Fugly hack... loads and presets all configuration values
-				var cfg:ConfigPanel = new ConfigPanel();
-				cfg.populate();
-				cfg.notifyConfiguration();
-				
-				var advancedConfig:AdvancedConfigPanel = new AdvancedConfigPanel();
-				advancedConfig.populate();
-				advancedConfig.notifyConfiguration();
-				
-				var soundConfig:SoundConfigPanel = new SoundConfigPanel();
-				soundConfig.populate();
-				soundConfig.notifyConfiguration();
-				
-				var timingConfig:TimingConfigPanel = new TimingConfigPanel();
-				timingConfig.populate();
-				timingConfig.notifyConfiguration();
+
+				dialogList[CONFIG_DIALOG_ID] = new ConfigPanel();
+				dialogList[ADVANCED_DIALOG_ID] = new AdvancedConfigPanel();
+				dialogList[SOUND_DIALOG_ID] = new SoundConfigPanel();
+				dialogList[TIMING_DIALOG_ID] = new TimingConfigPanel();
+				dialogList[ABOUT_DIALOG_ID] = new AboutPanel();
+				dialogList[CONFIRM_DIALOG_ID] = new ConfirmPanel();
 			}
-				
+
         	private function init():void {
         		checkForUpdates();
         		PomodoroEventDispatcher.getInstance().addEventListener(PomodoroEvent.START_POMODORO, closeTaskList);
         		PomodoroEventDispatcher.getInstance().addEventListener(PomodoroEvent.SELECTED, onPomodoroSelected);
         		PomodoroEventDispatcher.getInstance().addEventListener(PomodoroEvent.TIME_OUT, onPomodoroTimeout);
 				PomodoroEventDispatcher.getInstance().addEventListener(GuiChangeEvent.UPDATED, onGuiChange);
-				
-				// Dispatch Twitter config after initialization to avoid locking up in a fugly graphic mode
-				var tcfg:TwitterConfigPanel = new TwitterConfigPanel();
-				tcfg.populate();
-				tcfg.notifyConfiguration();
-				
+
+				dialogList[TWITTER_DIALOG_ID] = new TwitterConfigPanel();
+
 				// Display task list on startup
 				toggleTaskList();
         	}
-        	
+
         	private function checkForUpdates():void {
 				appUpdater.configurationFile = new File("app:/updateConfig.xml");
 				appUpdater.isCheckForUpdateVisible = false;
@@ -120,35 +115,35 @@
 				updaterInitialised);
 				appUpdater.initialize();
 			}
-				
+
 			private function updaterInitialised(event:UpdateEvent):void {
 				appUpdater.checkNow();
 			}
-			
+
 			private function onConfigurationChange(e:ConfigurationUpdatedEvent):void {
         		trace("Configuration change: "+e.configElement.name +" -> "+e.configElement.value);
-				if (e.configElement.name == ConfigPanel.ALWAYS_ON_TOP) 
+				if (e.configElement.name == ConfigPanel.ALWAYS_ON_TOP)
 				{
 					this.alwaysInFront = e.configElement.value == "true";
 				}
 			}
-			
+
 			private function shutdown():void
 			{
 				twitterManager.stop();
 			}
-        	
+
         	private function onPomodoroTimeout(event:PomodoroEvent):void {
         		nativeWindow.notifyUser(NotificationType.CRITICAL);
         		nativeWindow.orderToFront();
         	}
-        	
+
         	private function onPomodoroSelected(event:PomodoroEvent):void {
         		trace("Pomodoro selected: "+event.pomodoro.name);
         		unplannedButton.enabled = true;
         		interruptionButton.enabled = true;
         	}
-        
+
             private function toggleTaskList():void {
             	if (!taskListPanel.visible) {
 					taskListPanel.visible = true;
@@ -160,7 +155,7 @@
             		closeTaskList();
             	}
             }
-            
+
             private function closeTaskList(event:PomodoroEvent=null):void {
 				this.height = SHORT_HEIGHT;
 				taskListPanel.visible = false;
@@ -173,7 +168,7 @@
             	PopUpManager.addPopUp(input, this, true);
                 PopUpManager.centerPopUp(input);
             }
-            
+
              private function newUnplanned():void {
             	var input:PomoItemInput = new PomoItemInput();
             	input.type = Pomodoro.TYPE_UNPLANNED;
@@ -181,14 +176,14 @@
             	PopUpManager.addPopUp(input, this, true);
                 PopUpManager.centerPopUp(input);
             }
-            
+
             private function beforeClose():void {
             	Storage.instance.setConfigurationValue("window.x",""+this.nativeWindow.x);
             	Storage.instance.setConfigurationValue("window.y",""+this.nativeWindow.y);
 				Storage.instance.setConfigurationValue("window.height", ""+this.height);
 				Storage.instance.setConfigurationValue("window.width", ""+this.width);
             }
-            
+
 			private function onGuiChange(event:GuiChangeEvent):void {
 				if (event.miniView) {
 					trace("Switch application to mini view");
@@ -199,9 +194,9 @@
 					trace("Switch application to regular view");
 					myMenuBar.enabled = true;
 					this.height = SHORT_HEIGHT;
-				}			
+				}
 			}
-            
+
 			private function toggleViewState():void {
 				timerCanvas.toggleMiniView();
 			}
@@ -227,85 +222,111 @@
 				Storage.instance.setConfigurationValue('window.height', ''+this.height);
 			}
 
-			
+
     		/* ----------------------------------------------------
         		MENU STUFF
 	   	  	---------------------------------------------------- */
-	   	  
+
+			public static const STATISTIC_DIALOG_ID:String = "statistic";
+
+			public static const CONFIG_DIALOG_ID:String = "config";
+			public static const TWITTER_DIALOG_ID:String = "twitter";
+			public static const ADVANCED_DIALOG_ID:String = "advancedConfig";
+			public static const SOUND_DIALOG_ID:String = "sound";
+			public static const TIMING_DIALOG_ID:String = "timing";
+			public static const ABOUT_DIALOG_ID:String = "about";
+			public static const CONFIRM_DIALOG_ID:String = "confirm";
+
+			private var dialogList:Object = { }
+
             private function menuClick(event:MenuEvent):void {
-                if (event.item.@action == 'config') {
-                	showSettingsDialog();
-                } else if (event.item.@action == 'statistics') {
-                	showStatisticsPanel();
-                } else if (event.item.@action == 'twitter') {
-                	showTwitterConfigPanel();
-                } else if (event.item.@action == 'advancedConfig') {
-                	showAdvancedSettingsDialog();
-                } else if (event.item.@action == 'sounds') {
-					showSoundsSettingsDialog();
-				} else if (event.item.@action == 'timing') {
-					showTimingSettingsDialog();
-				} else if (event.item.@action == 'about') {
-					showAboutPage();
+				var action:String = event.item.@action;
+				switch (action)
+				{
+					case STATISTIC_DIALOG_ID:
+						showStatisticsPanel();
+						break;
+
+					case CONFIG_DIALOG_ID:
+					case TWITTER_DIALOG_ID:
+					case ADVANCED_DIALOG_ID:
+					case SOUND_DIALOG_ID:
+					case TIMING_DIALOG_ID:
+					case ABOUT_DIALOG_ID:
+					case CONFIRM_DIALOG_ID:
+						var dialog:IFlexDisplayObject = dialogList[action];
+						showPopup(dialog);
+						break;
+
+					default:
+						trace("WARNING: Dialog with unhandled menu action \"" + action + "\"");
+						break;
 				}
             }
-            
-            private function showSettingsDialog():void {
-            	var dialog:ConfigPanel = new ConfigPanel();
-            	PopUpManager.addPopUp(dialog, this, true);
-                PopUpManager.bringToFront(dialog);
-            }
-            
-            private function showTwitterConfigPanel():void {
-            	var dialog:TwitterConfigPanel = new TwitterConfigPanel();
-            	PopUpManager.addPopUp(dialog, this, true);
-                PopUpManager.bringToFront(dialog);
-            }
-            
+
             private function showStatisticsPanel():void
 	        {
             	var myWindow:StatisticsWindow = new StatisticsWindow();
 		      	myWindow.systemChrome = NativeWindowSystemChrome.STANDARD;
 		      	myWindow.type = NativeWindowType.NORMAL;
 		      	myWindow.open( true );
-	        }   
-	        
-	        private function showAdvancedSettingsDialog():void {
-            	var dialog:AdvancedConfigPanel = new AdvancedConfigPanel();
-            	PopUpManager.addPopUp(dialog, this, true);
-                PopUpManager.bringToFront(dialog);
-            }
-			
-			private function showSoundsSettingsDialog():void {
-				var dialog:SoundConfigPanel = new SoundConfigPanel();
-				PopUpManager.addPopUp(dialog, this, true);
-				PopUpManager.bringToFront(dialog);
+	        }
+
+			private function showPopup(dialog:IFlexDisplayObject):void
+			{
+				if (dialog) {
+
+					if (dialog is BaseConfigPanel) {
+						var panel:BaseConfigPanel = dialog as BaseConfigPanel;
+						panel.populate();
+						panel.notifyConfiguration();
+					}
+					PopUpManager.addPopUp(dialog, this, true);
+					PopUpManager.centerPopUp(dialog);
+					PopUpManager.bringToFront(dialog);
+				}
 			}
-			
-			private function showTimingSettingsDialog():void {
-				var dialog:TimingConfigPanel = new TimingConfigPanel();
-				PopUpManager.addPopUp(dialog, this, true);
-				PopUpManager.bringToFront(dialog);
-			}
-	        
-			private function showAboutPage():void {
-				var dialog:AboutPanel = new AboutPanel();
-				PopUpManager.addPopUp(dialog, this, true);
-				PopUpManager.bringToFront(dialog);
-			}
-			
+
 			/* ----------------------------------------------------
     			END OF MENU STUFF
 	   	  	---------------------------------------------------- */
 
+			[Bindable]
+			public var xmlMenu:XMLList = <>
+				<menuitem label="Menu">
+					<menuitem label="Config">
+						<menuitem label="Configuration" action={CONFIG_DIALOG_ID}/>
+						<menuitem label="Sounds" action={SOUND_DIALOG_ID}/>
+						<menuitem label="Timing" action={TIMING_DIALOG_ID}/>
+						<menuitem label="Twitter" action={TWITTER_DIALOG_ID}/>
+						<menuitem label="Advanced" action={ADVANCED_DIALOG_ID}/>
+					</menuitem>
+					<menuitem label="Statistics" action={STATISTIC_DIALOG_ID}/>
+					<menuitem label="Pomodairo" action={ABOUT_DIALOG_ID}/>
+				</menuitem>
+			</>
+
+			private function lblClose_clickHandler(event:MouseEvent):void
+			{
+				if (Storage.instance.config[ConfigPanel.REMEMBER_POSITION] == "false")
+				{
+					close();
+					return;
+				}
+
+				if (timerCanvas.currentState == "minimal")
+					timerCanvas.toggleMiniView();
+
+				showPopup(dialogList[CONFIRM_DIALOG_ID]);
+			}
         ]]>
     </mx:Script>
 
         <mx:Fade id="fadein" />
         <mx:Fade id="fadeout" />
 
-	<s:Panel styleName="timerPanel" left="0" top="0" height="164" right="0" mouseDown="{nativeWindow.startMove()}">
-		<ns1:timer id="timerCanvas" left="0" top="0" width="100%" pomodoroLengthInMinutes="25">
+	<s:Panel styleName="timerPanel"  left="0" top="0" height="{SHORT_HEIGHT}" right="0" mouseDown="{nativeWindow.startMove()}">
+		<ns1:timer id="timerCanvas" left="0" top="24" right="0" pomodoroLengthInMinutes="25">
 		</ns1:timer>
 		
 		<s:controlBarContent>
@@ -316,29 +337,15 @@
 		
 	</s:Panel>
 	
-	<mx:Label text="x" click="close()" color="#FFFFFF" right="8" top="2"/>
+	<mx:Label id="lblClose" text="x" click="{lblClose_clickHandler(event)}" color="#FFFFFF" right="8" top="2"/>
 	<mx:Label text="_" click="minimize()" color="#FFFFFF" right="28" top="2"/>
 	<mx:Button right="56" top="0" height="22" width="54" id="toggleViewButton" label="view" click="toggleViewState()"/>
 	
-	<mx:Canvas id="taskListPanel" x="0" y="166" height="100%" width="100%" visible="false" showEffect="fadein" hideEffect="fadeout">
+	<mx:Canvas id="taskListPanel" x="0" y="{SHORT_HEIGHT}" height="100%" width="100%" visible="false" showEffect="fadein" hideEffect="fadeout">
 		<ns1:TaskListCanvas x="0" y="0" height="100%" width="100%" app="{this}">
 		</ns1:TaskListCanvas>
 	</mx:Canvas>
 	
-	<mx:MenuBar id="myMenuBar" labelField="@label" itemClick="menuClick(event)">
-        <mx:XMLList>
-            <menuitem label="Menu">
-				<menuitem label="Config">
-					<menuitem label="Configuration" action="config"/>
-					<menuitem label="Sounds" action="sounds"/>
-					<menuitem label="Timing" action="timing"/>
-					<menuitem label="Twitter" action="twitter"/>
-					<menuitem label="Advanced" action="advancedConfig"/>
-				</menuitem>
-				<menuitem label="Statistics" action="statistics"/>
-				<menuitem label="Pomodairo" action="about"/>
-            </menuitem>
-        </mx:XMLList>
-    </mx:MenuBar>
+	<mx:MenuBar id="myMenuBar" labelField="@label" itemClick="menuClick(event)" dataProvider="{xmlMenu}" />
 	
 </mx:WindowedApplication>

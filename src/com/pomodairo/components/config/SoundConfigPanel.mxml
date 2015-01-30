@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" x="10" y="5" width="298" height="154" backgroundColor="#313131"
-	creationComplete="init()">
+<config:BaseConfigPanel
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:config="com.pomodairo.components.config.*"
+	creationComplete="init()" >
 
 
 <mx:Script>
@@ -13,10 +15,10 @@
 			public static var ALARM_SOUND_FILE:String = "sound.alarmSound";
 			public static var CLOCK_SOUND_FILE:String = "sound.clockSound";
         	
-        	private var soundEnabled:Boolean = new Boolean(true);
-        	private var volume:Number = new Number(100);
+        	private var soundEnabled:Boolean = true;
+        	private var volume:Number = 100;
         	
-        	private var fadeTicking:Boolean = new Boolean(true);
+        	private var fadeTicking:Boolean = true;
 			
 			private var alarmSound:String = "";
 			private var clockSound:String = "";
@@ -32,7 +34,7 @@
         		applyGuiValues();	
         	}
         	
-        	public function populate():void
+        	override public function populate():void
         	{
         		var props:Dictionary = Storage.instance.config;
         		if (props["volume"] != null) 
@@ -70,11 +72,6 @@
 				alarmFileLocationInput.text = alarmSound;
 				clockFileLocationInput.text = clockSound;
             }
-        	
-            private function exit():void
-            {
-            	this.parent.removeChild(this);
-            }
             
             public function save():void
             {
@@ -94,7 +91,7 @@
             	notifyConfiguration();
             }
             
-            public function notifyConfiguration():void
+            override public function notifyConfiguration():void
             {
             	// Notify the world 
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, "volume", ""+volume));
@@ -146,4 +143,4 @@
 	</mx:TextInput>
 	<mx:Button x="149" y="122" label="Browse" click="selectClockFile()" width="64"/>
 	
-</mx:Canvas>
+</config:BaseConfigPanel>
