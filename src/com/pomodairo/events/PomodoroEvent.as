@@ -8,6 +8,7 @@ package com.pomodairo.events
 	{
 		public static var SELECTED:String = "pomodoro selected";
 		public static var DELETED:String = "pomodoro deleted";
+		public static var LIST_EMPTY:String = "list empty";
 		public static var TIME_OUT:String = "pomodoro time out";
 		public static var START_POMODORO:String = "pomodoro started";
 		public static var STOP_POMODORO:String = "pomodoro stopped";

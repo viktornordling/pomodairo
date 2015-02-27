@@ -93,8 +93,9 @@
                 breakTimer.addEventListener(TimerEvent.TIMER, updateAppTitle); 
 
                 PomodoroEventDispatcher.getInstance().addEventListener(PomodoroEvent.SELECTED, onPomodoroSelected);
+				PomodoroEventDispatcher.getInstance().addEventListener(PomodoroEvent.LIST_EMPTY, onListEmpty);
                 PomodoroEventDispatcher.getInstance().addEventListener(PomodoroEvent.START_BREAK, setBreakTitle);
-                PomodoroEventDispatcher.getInstance().addEventListener(ConfigurationUpdatedEvent.UPDATED, onConfigurationChange);   	   	
+                PomodoroEventDispatcher.getInstance().addEventListener(ConfigurationUpdatedEvent.UPDATED, onConfigurationChange);
             }
 			
 			
@@ -177,6 +178,11 @@
 					stopBreakTimer();
 					showStartButton();
 				}
+			}
+
+			private function onListEmpty(event:PomodoroEvent):void
+			{
+				showNewTaskButton();
 			}
 			
 			private function onConfigurationChange(e:ConfigurationUpdatedEvent):void {
@@ -295,6 +301,9 @@
 			           	}
 	            	}
 	            	if (!breakTimer.running) {
+						if (taskManager.activeTask == null)
+							return;
+
 		            	var title:String = remaining+" "+taskManager.activeTask.name; 
 		            	if (appTitle != title) {
 		            		appTitle = title;
@@ -442,7 +451,9 @@
 				if(taskManager.hasMoreTasks()) {
 					taskManager.nextTask();
 	        		showNextTaskButton();
-	   			}
+	   			} else {
+					showNewTaskButton();
+				}
 	        }
 
 	        public function onNextTaskClicked(event:Event = null):void 
@@ -451,6 +462,7 @@
 	        	var result:Boolean = taskManager.nextTask();
 	        	if(!result) {
 	        		trace("There is no next task!");
+					showNewTaskButton();
 	        	}
 	        }
 	        
@@ -510,7 +522,6 @@
 						<mx:RemoveChild target="{startTimerButton}"/>
 						<mx:RemoveChild target="{stopTimerButton}"/>
 						<mx:RemoveChild target="{stopBreakButton}"/>
-						<mx:RemoveChild target="{newTaskButton}"/>
 						<mx:SetProperty target="{miniCounter}" name="visible" value="true"/>
 						<mx:AddChild position="lastChild">
 							<mx:ProgressBar id="timeProgressBar" x="4" y="2" width="220" height="22" label="{taskManager.activeTask.shortDescription}" 

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config:BaseConfigPanel
+	xmlns:config="com.pomodairo.components.config.*"
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	height="108">
+
+
+	<mx:Script>
+        <![CDATA[
+		import com.pomodairo.db.Storage;
+
+		import mx.core.Application;
+		import mx.core.WindowedApplication;
+
+		private function btnExit_clickHandler(event:MouseEvent):void
+		{
+			if (confirmApplicationExitCheckbox.selected);
+				Storage.instance.setConfigurationValue(ConfigPanel.CONFIRM_APPLICATION_EXIT, "false");
+
+			var app:WindowedApplication = Application.application as WindowedApplication;
+			app.close();
+		}
+
+		]]>
+    </mx:Script>
+
+	<mx:Text right="8" left="8" bottom="80" top="8"
+		textAlign="center" text="Are you shure want to exit Pomodoro?"/>
+
+	<mx:CheckBox id="confirmApplicationExitCheckbox"
+		bottom="48" horizontalCenter="0" selected="false"
+		label="Don't ask me again" />
+
+	<mx:Button id="btnExit" width="64" bottom="8" horizontalCenter="34" label="Exit"
+		click="{btnExit_clickHandler(event)}" />
+
+	<mx:Button id="btnCancel" width="64" bottom="8" horizontalCenter="-34" label="Cancel"
+		click="exit()" />
+	
+</config:BaseConfigPanel>

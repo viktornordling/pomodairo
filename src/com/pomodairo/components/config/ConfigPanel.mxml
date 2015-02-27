@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" x="10" y="5" width="298" height="154" backgroundColor="#313131"
-	creationComplete="init()">
+<config:BaseConfigPanel
+		xmlns:mx="http://www.adobe.com/2006/mxml" width="298" height="154" backgroundColor="#313131"
+		creationComplete="init()" xmlns:config="com.pomodairo.components.config.*">
 
-
-<mx:Script>
+	<mx:Script>
         <![CDATA[
         	import com.pomodairo.events.ConfigurationUpdatedEvent;
         	import com.pomodairo.PomodoroEventDispatcher;
         	import com.pomodairo.db.Storage;
-        	
+
+			public static var CONFIRM_APPLICATION_EXIT:String = "window.confirmApplicatonExit";
         	public static var REMEMBER_POSITION:String = "window.rememberPosition";
         	public static var ALWAYS_ON_TOP:String = "window.alwaysOnTop";
         	public static var UPDATE_TASKBAR:String = "window.updateTaskbar";
-        	
-        	private var rememberPosition:Boolean = new Boolean(true);
-        	private var alwaysOnTop:Boolean = new Boolean(false);
-        	private var updateTaskbar:Boolean = new Boolean(true);
+			public static var URL_TO_OPEN:String = "urlToOpen";
+
+			private var confirmApplicationExit:Boolean = true;
+        	private var rememberPosition:Boolean = true;
+        	private var alwaysOnTop:Boolean = false;
+        	private var updateTaskbar:Boolean = true;
         	private var urlToOpen:String = "";
         	
         	private function init():void
@@ -24,7 +27,7 @@
         		applyGuiValues();	
         	}
         	
-        	public function populate():void
+        	public override function populate():void
         	{
         		var props:Dictionary = Storage.instance.config;
         		if (props[REMEMBER_POSITION] != null) 
@@ -42,11 +45,15 @@
         			updateTaskbar = props[UPDATE_TASKBAR] == "true";
         		}
         		
-        		if (props["urlToOpen"] != null) 
+        		if (props[URL_TO_OPEN] != null)
         		{
-        			urlToOpen = props["urlToOpen"];
+        			urlToOpen = props[URL_TO_OPEN];
         		}
-        		
+
+				if (props[CONFIRM_APPLICATION_EXIT] != null)
+				{
+					confirmApplicationExit = props[CONFIRM_APPLICATION_EXIT] == "true";
+				}
         	}
         	
         	private function applyGuiValues():void
@@ -55,11 +62,7 @@
         		alwaysOnTopCheckbox.selected = alwaysOnTop;
         		updateTaskbarCheckbox.selected = updateTaskbar;
         		urlToOpenInput.text = urlToOpen;
-            }
-        	
-            private function exit():void
-            {
-            	this.parent.removeChild(this);
+				confirmApplicationExitCheckbox.selected = confirmApplicationExit;
             }
             
             public function save():void
@@ -68,37 +71,47 @@
             	alwaysOnTop = alwaysOnTopCheckbox.selected;
             	updateTaskbar = updateTaskbarCheckbox.selected;
             	urlToOpen = urlToOpenInput.text;
+				confirmApplicationExit = confirmApplicationExitCheckbox.selected;
             	
             	Storage.instance.setConfigurationValue(REMEMBER_POSITION, ""+rememberPosition);
             	Storage.instance.setConfigurationValue(ALWAYS_ON_TOP, ""+alwaysOnTop);
             	Storage.instance.setConfigurationValue(UPDATE_TASKBAR, ""+updateTaskbar);
-            	Storage.instance.setConfigurationValue("urlToOpen", urlToOpen);
+            	Storage.instance.setConfigurationValue(URL_TO_OPEN, urlToOpen);
+				Storage.instance.setConfigurationValue(CONFIRM_APPLICATION_EXIT, ""+confirmApplicationExit);
+
             	exit();
-            	
             	notifyConfiguration();
             }
             
-            public function notifyConfiguration():void
+            override public function notifyConfiguration():void
             {
             	// Notify the world 
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, REMEMBER_POSITION, ""+rememberPosition));
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, ALWAYS_ON_TOP, ""+alwaysOnTop));
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, UPDATE_TASKBAR, ""+updateTaskbar));
-            	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, "urlToOpen", urlToOpen));
+            	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, URL_TO_OPEN, urlToOpen));
+            	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, CONFIRM_APPLICATION_EXIT, ""+confirmApplicationExit));
             }
 			            
         ]]>
     </mx:Script>
-	<mx:CheckBox x="10" y="10" label="Always on top" id="alwaysOnTopCheckbox" />
-	<mx:CheckBox x="10" y="40" label="Update taskbar" id="updateTaskbarCheckbox"  selected="true">
+
+	<mx:CheckBox id="alwaysOnTopCheckbox" x="8" y="8" label="Always on top"  />
+	<mx:CheckBox id="confirmApplicationExitCheckbox" x="8" y="30" label="Confirm application exit" selected="true"/>
+
+	<mx:CheckBox x="8" y="52" label="Update taskbar" id="updateTaskbarCheckbox"  selected="true">
 		<mx:toolTip>Should the taskbar icon be updated with the current pomodoro and time remaining?</mx:toolTip>
 	</mx:CheckBox>
-	<mx:Button x="221" y="90" label="Save" click="save()" width="63"/>
-	<mx:Button x="221" y="121" label="Cancel" click="exit()"/>
-	<mx:CheckBox x="10" y="70" label="Remember pos." id="positionCheckbox" selected="true"/>
-	<mx:Label x="10" y="107" color="#A9A9A9" text="URL to open (e.g. to Bugtracker):"/>
-	<mx:TextInput id="urlToOpenInput" x="10" y="122" width="203">
+
+	<mx:CheckBox x="10" y="74" label="Remember pos." id="positionCheckbox" selected="true"/>
+
+	<mx:Button right="8" top="90" width="64" label="Save" click="save()" />
+	<mx:Button right="8" top="121" width="64" label="Cancel" click="exit()" />
+
+
+	<mx:Label x="8" y="107" color="#A9A9A9" text="URL to open (e.g. to Bugtracker):"/>
+	<mx:TextInput id="urlToOpenInput" x="8" y="122" width="203">
 		<mx:toolTip>URL to open, when clicking on the active task label that contains a hash number (e.g. task name 'Write unit tests #123' could open URL 'bugtracker.mycompany.com?id=123').</mx:toolTip>
 	</mx:TextInput>
 	
-</mx:Canvas>
+</config:BaseConfigPanel>

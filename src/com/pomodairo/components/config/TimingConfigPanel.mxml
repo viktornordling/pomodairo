@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" x="10" y="5" width="298" height="154" backgroundColor="#313131"
-	creationComplete="init()">
-
+<config:BaseConfigPanel
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:config="com.pomodairo.components.config.*"
+	creationComplete="init()" >
 
 <mx:Script>
         <![CDATA[
@@ -14,10 +15,10 @@
 			public static var LONG_BREAK_LENGTH:String = "time.longBreakLength";
 			public static var LONG_BREAK_INTERVAL:String = "time.longBreakInterval";
 			
-        	private var pomodoroLength:Number = new Number(25);  
-			private var shortBreakLength:Number = new Number(5);  
-			private var longBreakLength:Number = new Number(20);  
-			private var longBreakInterval:Number = new Number(4);  
+        	private var pomodoroLength:Number = 25;
+			private var shortBreakLength:Number = 5;
+			private var longBreakLength:Number = 20;
+			private var longBreakInterval:Number = 4;
         	
         	private function init():void
         	{
@@ -25,7 +26,7 @@
         		applyGuiValues();	
         	}
         	
-        	public function populate():void
+			override public function populate():void
         	{
         		var props:Dictionary = Storage.instance.config;
         		
@@ -57,11 +58,6 @@
 				longBreakSlider.value = longBreakLength;
 				longBreakSelect.value = longBreakInterval;
             }
-        	
-            private function exit():void
-            {
-            	this.parent.removeChild(this);
-            }
             
             public function save():void
             {
@@ -79,7 +75,7 @@
             	notifyConfiguration();
             }
             
-            public function notifyConfiguration():void
+            override public function notifyConfiguration():void
             {
             	// Notify the world 
             	PomodoroEventDispatcher.getInstance().dispatchEvent(new ConfigurationUpdatedEvent(ConfigurationUpdatedEvent.UPDATED, POMODORO_LENGTH, ""+pomodoroLength));
@@ -104,4 +100,4 @@
 	<mx:NumericStepper x="228" y="25" value="4" minimum="1" maximum="30" enabled="true" id="longBreakSelect" toolTip="Number of pomodoros until a long break"/>
 	<mx:Label x="176" y="7" text="Long break interval"/>
 	
-</mx:Canvas>
+</config:BaseConfigPanel>
